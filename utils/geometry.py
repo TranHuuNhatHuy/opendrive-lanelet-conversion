@@ -63,6 +63,18 @@ def calAngleTriplePoints(
     p2: PointCoords,
     p3: PointCoords
 ):
+    """
+    Calculate angle between 3 PointCoords points, in degrees.
+    The angle is calculated at p2, between p1 and p3, forming by 2 vectors p2p1 and p2p3.
+
+    Params
+    ------
+        p1, p2, p3: PointCoords, lat and lon of that point, resulted from CRS conversion.
+    
+    Returns
+    -------
+        angle: float, angle in degrees.
+    """
 
     a = coords2XY(p1)
     b = coords2XY(p2)
