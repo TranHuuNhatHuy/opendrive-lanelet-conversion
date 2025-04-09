@@ -4,7 +4,7 @@ import math
 import itertools
 from pprint import pprint
 from lxml import etree
-from geometry import PointCoords, dist_2nodes, coords2XY, calAngleTriplePoints
+from .geometry import PointCoords, dist_2nodes, coords2XY, calAngleTriplePoints
 
 
 def simplifyWayNodes(
