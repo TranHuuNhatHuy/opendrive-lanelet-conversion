@@ -60,16 +60,19 @@ def conductConversion(
     scenario_location: Location,
 ):
     
-    # Scenario initialization
-    scenario = opendrive_to_commonroad(input_file_path)
-    scenario.location = scenario_location
+    try:
 
-    if (scenario):
-        try:
+        # Scenario initialization
+        scenario = opendrive_to_commonroad(input_file)
+        scenario.location = scenario_location
+
+        # Attempt conversion
+        if (scenario):
             l2osm = CR2LaneletConverter(lanelet2_config)
             osm = l2osm(scenario)
             return osm
-        except Exception as e:
-            print(f"Error during conversion: {e}")
+
+    except Exception as e:
+        print(f"Error during conversion: {e}")
         
     return None

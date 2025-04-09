@@ -4,6 +4,8 @@ import math
 
 
 PointCoords = tuple[float, float]
+R = 6378000                             # Earth radius, in meters
+
 
 def coords2XY(
     p: PointCoords,
@@ -76,9 +78,9 @@ def calAngleTriplePoints(
         angle: float, angle in degrees.
     """
 
-    a = coords2XY(p1)
-    b = coords2XY(p2)
-    c = coords2XY(p3)
+    a = coords2XY(p1, R)
+    b = coords2XY(p2, R)
+    c = coords2XY(p3, R)
 
     v1 = (
         a[0] - b[0],
@@ -100,7 +102,10 @@ def calAngleTriplePoints(
     angle = math.degrees(
         math.acos(
             max(
-                min(dot / (norm_v1 * norm_v2), 1.0), 
+                min(
+                    dot_prod / (norm_v1 * norm_v2), 
+                    1.0
+                ), 
                 -1.0
             )
         )
