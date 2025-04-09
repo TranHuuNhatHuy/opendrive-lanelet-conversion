@@ -1,22 +1,6 @@
 #! /usr/bin/env python3
 
-import os
-import json
-import torch
-import random
-import pathlib
-import numpy as np
-
-import sys
-sys.path.append(os.path.abspath(os.path.join(
-    os.path.dirname(__file__), 
-    '..',
-    '..'
-)))
-
-from argparse import ArgumentParser
-from PIL import Image
-from typing import Literal, get_args
+import math
 
 
 PointCoords = tuple[float, float]
