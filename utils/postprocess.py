@@ -12,6 +12,22 @@ def simplifyWayNodes(
     straight_angle_threshold: float = 175.0,
     min_segment_dist: float = 3.0
 ):
+    """
+    Simplify a list of points by removing points that are too close to each other
+    or that form an angle that is too small.
+    I took inspiration from Douglas-Peucker algorithm, FYI:
+    https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm
+
+    Params
+    ------
+        points: list[PointCoords], list of tuples (lat, lon) of the points to simplify.
+        straight_angle_threshold: float, angle threshold, in degrees. Default 175.0.
+        min_segment_dist: float, minimum distance between points, in meters. Default 3.0.
+
+    Returns
+    -------
+        simplified_points: list[PointCoords], list of tuples (lat, lon) of the simplified points.
+    """
 
     # No point in simplifying 2 nodes
     if (len(points) <= 2):
@@ -47,10 +63,23 @@ def simplifyWayNodes(
 
 
 def postprocessDownsamplingOSM(
-    osm_root,
+    osm_root: etree.Element,
     straight_angle_threshold: float,
     min_segment_dist: float
 ):
+    """
+    Postprocess OSM data by downsampling the nodes of the ways.
+
+    Params
+    ------
+        osm_root: lxml.etree.Element, root element of the OSM XML file.
+        straight_angle_threshold: float, angle threshold, in degrees.
+        min_segment_dist: float, minimum distance between points, in meters.
+
+    Returns
+    -------
+        osm_root: lxml.etree.Element, root element of the OSM XML file after downsampling.
+    """
 
     # Map node ID to (lat, lon)
     nodes = {
