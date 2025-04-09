@@ -8,13 +8,13 @@ from crdesigner.map_conversion.map_conversion_interface import opendrive_to_comm
 
 def prepConversionCRS(
     georeference_string: str = "EPSG:3857",
-    x_translation: float | None = 0.0,
-    y_translation: float | None = 0.0,
-    z_rotation: float | None = None,
-    scaling: float | None = None,
-    geo_name_id: int | None = 11,
-    gps_latitude: float | None = 0.0,
-    gps_longitude: float | None = 0.0,
+    x_translation: float = 0.0,
+    y_translation: float = 0.0,
+    z_rotation: float = None,
+    scaling: float = None,
+    geo_name_id: int = 11,
+    gps_latitude: float = 0.0,
+    gps_longitude: float = 0.0,
     environment: str = None
 ):
     """
@@ -39,7 +39,7 @@ def prepConversionCRS(
 
     # Init scenario handling
     location_geotransformation = GeoTransformation(
-        georeference_string = georeference_string,
+        georeference_string,
         x_translation = x_translation,
         y_translation = y_translation,
         z_rotation = z_rotation,
@@ -54,3 +54,22 @@ def prepConversionCRS(
     )
 
     return scenario_location
+
+def conductConversion(
+    input_file: str,
+    scenario_location: Location,
+):
+    
+    # Scenario initialization
+    scenario = opendrive_to_commonroad(input_file_path)
+    scenario.location = scenario_location
+
+    if (scenario):
+        try:
+            l2osm = CR2LaneletConverter(lanelet2_config)
+            osm = l2osm(scenario)
+            return osm
+        except Exception as e:
+            print(f"Error during conversion: {e}")
+        
+    return None
