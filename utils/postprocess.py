@@ -35,6 +35,8 @@ def simplifyWayNodes(
 
     # Keep first node
     simplified_points = [points[0]]
+    # Last kept node
+    last_kept = points[0]
 
     # Check angle, second first to second last nodes
     for i in range(1, len(points) - 1):
@@ -44,13 +46,15 @@ def simplifyWayNodes(
             points[i],
             points[i + 1]
         )
-        this_dist = dist_2nodes(points[i - 1], points[i])
+        this_dist = dist_2nodes(last_kept, points[i])
 
         if (
-            (this_angle < straight_angle_threshold) or
+            (this_angle < straight_angle_threshold) and
             (this_dist >= min_segment_dist)
         ):
             simplified_points.append(points[i])
+            last_kept = points[i]
+
 
     # Keep last node
     simplified_points.append(points[-1])
