@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" upload="true" generator="VMB">
+  <way id="2001" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="dashed"/>
+    <nd ref="1000000"/>
+    <nd ref="1000001"/>
+  </way>
+  <way id="2002" action="modify" visible="true" version="1">
+    <nd ref="1000002"/>
+    <nd ref="1000003"/>
+  </way>
+  <way id="3004" action="modify" visible="true" version="1">
+    <nd ref="1000004"/>
+    <nd ref="1000005"/>
+  </way>
+  <relation id="2003" action="modify" visible="true" version="1">
+    <member type="way" ref="2002" role="right"/>
+    <member type="way" ref="2001" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <relation id="3005" action="modify" visible="true" version="1">
+    <member type="way" ref="3004" role="right"/>
+    <member type="way" ref="2001" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <node id="1000000" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="0.0000"/>
+    <tag k="local_y" v="0.0000"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+  <node id="1000001" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="500.0000"/>
+    <tag k="local_y" v="0.0000"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+  <node id="1000002" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="-0.0000"/>
+    <tag k="local_y" v="-3.0700"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+  <node id="1000003" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="500.0000"/>
+    <tag k="local_y" v="-3.0700"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+  <node id="1000004" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="500.0000"/>
+    <tag k="local_y" v="3.0700"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+  <node id="1000005" visible="true" version="1" lat="" lon="">
+    <tag k="local_x" v="0.0000"/>
+    <tag k="local_y" v="3.0700"/>
+    <tag k="ele" v="0.0000"/>
+  </node>
+</osm>

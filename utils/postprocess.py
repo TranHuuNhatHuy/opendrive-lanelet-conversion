@@ -4,19 +4,22 @@ import math
 import itertools
 from pprint import pprint
 from lxml import etree
-from .geometry import PointCoords, dist_2nodes, coords2XY, calAngleTriplePoints
+from .conversion import DEFAULT_GEOSTRING
+from .geometry import PointCoords, dist_2nodes, calAngleTriplePoints
+from pyproj import Transformer
 
 
 def simplifyWayNodes(
     points: list[PointCoords],
     straight_angle_threshold: float = 175.0,
-    min_segment_dist: float = 3.0
+    min_segment_dist: float = 3.0,
+    transformer = None
 ):
     """
     Simplify a list of points by removing points that are too close to each other
     or that form an angle that is too small.
     I took inspiration from Douglas-Peucker algorithm, FYI:
-    https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm
+    https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm
 
     Params
     ------
@@ -44,7 +47,8 @@ def simplifyWayNodes(
         this_angle = calAngleTriplePoints(
             points[i - 1],
             points[i],
-            points[i + 1]
+            points[i + 1],
+            transformer
         )
         this_dist = dist_2nodes(last_kept, points[i])
 
@@ -69,7 +73,8 @@ def simplifyWayNodes(
 def postprocessDownsamplingOSM(
     osm_root: etree.Element,
     straight_angle_threshold: float,
-    min_segment_dist: float
+    min_segment_dist: float,
+    geostring: str = DEFAULT_GEOSTRING
 ):
     """
     Postprocess OSM data by downsampling the nodes of the ways.
@@ -85,11 +90,25 @@ def postprocessDownsamplingOSM(
         osm_root: lxml.etree.Element, root element of the OSM XML file after downsampling.
     """
 
+    transformer = Transformer.from_crs(
+        DEFAULT_GEOSTRING,
+        geostring,
+        always_xy = True
+    )
+
     # Map node ID to (lat, lon)
     nodes = {
         node.get("id"): (
             float(node.get("lat")), 
-            float(node.get("lon"))
+            float(node.get("lon")),
+            float(next(
+                (
+                    tag.get("v") 
+                    for tag in node.findall("tag") 
+                    if tag.get("k") == "ele"
+                ), 
+                0
+            ))
         ) 
         for node in osm_root.findall("node")
     }
@@ -106,7 +125,7 @@ def postprocessDownsamplingOSM(
             for nd in way.findall("nd")
         ]
         coords = [
-            nodes[ref] 
+            nodes[ref][:2]
             for ref in nd_refs 
             if ref in nodes
         ]
@@ -114,7 +133,12 @@ def postprocessDownsamplingOSM(
         if (len(coords) < 2):
             print(f"Skipping way {way.get('id')} cuz not enough points.")
 
-        simplified = simplifyWayNodes(coords, straight_angle_threshold)
+        simplified = simplifyWayNodes(
+            points = coords,
+            straight_angle_threshold = straight_angle_threshold,
+            min_segment_dist = min_segment_dist,
+            transformer = transformer
+        )
         
         if (len(simplified) < 2):
             print(f"Skipping way {way.get('id')} cuz its too simple after filtering.")
@@ -127,19 +151,35 @@ def postprocessDownsamplingOSM(
         # New <node> & <nd> refs
 
         for lat, lon in simplified:
+            print(f"Using transformer: {transformer}")
+            print(f"Before conversion: lon = {lon}, lat = {lat}")
+            local_x, local_y = transformer.transform(lon, lat)
+            print(f"After conversion: local_x = {local_x}, local_y = {local_y}")
+
+            ele = next(
+                (
+                    nodes[ref][2] 
+                    for ref in nd_refs 
+                    if ((nodes[ref][0] == lat) and (nodes[ref][1] == lon))
+                ),
+                0.0
+            )
 
             node_id = str(next(new_node_id_gen))
 
             if node_id not in used_node_ids:
                 used_node_ids.add(node_id)
-                node = etree.Element(
-                    "node", 
-                    id = node_id, 
-                    visible = "true", 
-                    version = "1", 
-                    lat = str(lat), 
-                    lon = str(lon)
-                )
+
+                node = etree.Element("node", id=node_id, visible="true", version="1", lat=str(lat), lon=str(lon))
+
+                # tag_x = etree.Element("tag", k="local_x", v=f"{local_x:.4f}")
+                # tag_y = etree.Element("tag", k="local_y", v=f"{local_y:.4f}")
+                tag_ele = etree.Element("tag", k="ele", v=f"{ele:.4f}")
+
+                # node.append(tag_x)
+                # node.append(tag_y)
+                node.append(tag_ele)
+
                 new_nodes.append(node)
 
             nd = etree.Element("nd", ref = node_id)

@@ -2,14 +2,13 @@
 
 import math
 
-
 PointCoords = tuple[float, float]
 R = 6378000                             # Earth radius, in meters
 
 
 def coords2XY(
     p: PointCoords,
-    R: float
+    transformer
 ):
     """
     Extract a PointCoords instance's x and y coordinates.
@@ -26,8 +25,10 @@ def coords2XY(
 
     lat, lon = p[0], p[1]
 
-    x = math.radians(lon) * R * math.cos(math.radians(lat))
-    y = math.radians(lat) * R
+    # x = math.radians(lon) * R * math.cos(math.radians(lat))
+    # y = math.radians(lat) * R
+
+    x, y = transformer.transform(lon, lat)
 
     return x, y
 
@@ -63,7 +64,8 @@ def dist_2nodes(
 def calAngleTriplePoints(
     p1: PointCoords,
     p2: PointCoords,
-    p3: PointCoords
+    p3: PointCoords,
+    transformer
 ):
     """
     Calculate angle between 3 PointCoords points, in degrees.
@@ -78,9 +80,9 @@ def calAngleTriplePoints(
         angle: float, angle in degrees.
     """
 
-    a = coords2XY(p1, R)
-    b = coords2XY(p2, R)
-    c = coords2XY(p3, R)
+    a = coords2XY(p1, transformer)
+    b = coords2XY(p2, transformer)
+    c = coords2XY(p3, transformer)
 
     v1 = (
         a[0] - b[0],

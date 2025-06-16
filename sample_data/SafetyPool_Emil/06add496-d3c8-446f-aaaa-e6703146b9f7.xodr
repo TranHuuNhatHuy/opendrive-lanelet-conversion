@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<OpenDRIVE>
+  <header revMajor="1" revMinor="6" version="1.4" />
+  <road id="1" junction="-1" length="1050.0" name="R1" rule="LHT">
+    <planView>
+      <geometry hdg="0.0" length="1050.0" s="0.0" x="0.0" y="0.0">
+        <line />
+      </geometry>
+    </planView>
+    <lanes>
+      <laneSection s="0.0">
+        <center>
+          <lane id="0" level="true" type="driving">
+            <width a="0.0" b="0.0" c="0.0" d="0.0" sOffset="0.0" />
+            <roadMark color="standard" sOffset="0.0" type="broken" />
+            <material friction="0" sOffset="0.0" />
+          </lane>
+        </center>
+        <right>
+          <lane id="-1" level="true" type="driving">
+            <width a="3.5" b="0.0" c="0.0" d="0.0" sOffset="0.0" />
+            <roadMark color="standard" sOffset="0.0" type="broken" />
+            <material friction="0" sOffset="0.0" />
+          </lane>
+          <lane id="-2" level="true" type="driving">
+            <width a="3.5" b="0.0" c="0.0" d="0.0" sOffset="0.0" />
+            <roadMark color="standard" sOffset="0.0" type="solid" />
+            <material friction="0" sOffset="0.0" />
+          </lane>
+        </right>
+      </laneSection>
+    </lanes>
+  </road>
+</OpenDRIVE>

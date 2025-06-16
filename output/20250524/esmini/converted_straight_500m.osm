@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" upload="true" generator="commonroad-scenario-designer">
+  <way id="2001" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="dashed"/>
+    <nd ref="1000000"/>
+    <nd ref="1000001"/>
+  </way>
+  <way id="2002" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+    <nd ref="1000002"/>
+    <nd ref="1000003"/>
+  </way>
+  <way id="3004" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+    <nd ref="1000004"/>
+    <nd ref="1000005"/>
+  </way>
+  <relation id="2003" action="modify" visible="true" version="1">
+    <member type="way" ref="2002" role="right"/>
+    <member type="way" ref="2001" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <relation id="3005" action="modify" visible="true" version="1">
+    <member type="way" ref="3004" role="right"/>
+    <member type="way" ref="2001" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <node id="1000000" visible="true" version="1" lat="35.527164947832794" lon="145.30687338641613"/>
+  <node id="1000001" visible="true" version="1" lat="35.52696861231615" lon="145.31235792530623"/>
+  <node id="1000002" visible="true" version="1" lat="35.527137233799166" lon="145.30687190275526"/>
+  <node id="1000003" visible="true" version="1" lat="35.52694089831098" lon="145.31235643976117"/>
+  <node id="1000004" visible="true" version="1" lat="35.5269963263212" lon="145.31235941085208"/>
+  <node id="1000005" visible="true" version="1" lat="35.527192661866295" lon="145.30687487007768"/>
+</osm>

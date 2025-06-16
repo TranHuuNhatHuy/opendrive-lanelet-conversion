@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" upload="true" generator="commonroad-scenario-designer">
+  <way id="8001" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+    <nd ref="1000000"/>
+    <nd ref="1000001"/>
+  </way>
+  <way id="8002" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="dashed"/>
+    <nd ref="1000002"/>
+    <nd ref="1000003"/>
+  </way>
+  <way id="12004" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="dashed"/>
+    <nd ref="1000004"/>
+    <nd ref="1000005"/>
+  </way>
+  <way id="16006" action="modify" visible="true" version="1">
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+    <nd ref="1000006"/>
+    <nd ref="1000007"/>
+  </way>
+  <relation id="8003" action="modify" visible="true" version="1">
+    <member type="way" ref="8002" role="right"/>
+    <member type="way" ref="8001" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <relation id="12005" action="modify" visible="true" version="1">
+    <member type="way" ref="12004" role="right"/>
+    <member type="way" ref="8002" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <relation id="16007" action="modify" visible="true" version="1">
+    <member type="way" ref="16006" role="right"/>
+    <member type="way" ref="12004" role="left"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="location" v="urban"/>
+  </relation>
+  <node id="1000000" visible="true" version="1" lat="0.0" lon="0.0"/>
+  <node id="1000001" visible="true" version="1" lat="0.0" lon="0.01796630568239043"/>
+  <node id="1000002" visible="true" version="1" lat="-3.2339350228301055e-05" lon="-1.9802140871798107e-21"/>
+  <node id="1000003" visible="true" version="1" lat="-3.2339350228301055e-05" lon="0.01796630568239043"/>
+  <node id="1000004" visible="true" version="1" lat="-6.467870045659181e-05" lon="-3.9604281743596215e-21"/>
+  <node id="1000005" visible="true" version="1" lat="-6.467870045659181e-05" lon="0.01796630568239043"/>
+  <node id="1000006" visible="true" version="1" lat="-9.701805068486196e-05" lon="-5.940642261539432e-21"/>
+  <node id="1000007" visible="true" version="1" lat="-9.701805068486196e-05" lon="0.01796630568239043"/>
+</osm>
