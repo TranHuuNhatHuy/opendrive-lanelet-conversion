@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OpenDRIVE>
     <header revMajor="1" revMinor="4" name="" version="1" date="2019-04-01T11:50:49" north="2.7109904854583317e+2" south="-1.4635618340317393e+2" east="1.0811938464655533e+2" west="-2.2672651490482494e+2" vendor="VectorZero">
-        <geoReference><![CDATA[+lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0]]></geoReference>
         <userData>
             <vectorScene program="RoadRunner" version="2019.0.0 (build 739aef7bb)"/>
         </userData>
