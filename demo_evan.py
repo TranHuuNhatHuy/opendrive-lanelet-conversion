@@ -1,10 +1,20 @@
 import os
+import sys
+import csv
 import shutil
 from pathlib import Path
 from lxml import etree
 from pyproj import CRS, Transformer
 import math
 import itertools
+
+# Insert at the front of sys.path so the local repo is imported before any
+# pip-installed crdesigner package.
+# __file__ resolves correctly regardless of the working directory and regardless
+# of whether opendrive-lanelet-conversion lives inside or alongside the repo.
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CR_DESIGNER_PATH = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "commonroad-scenario-designer"))
+sys.path.insert(0, CR_DESIGNER_PATH)
 
 from crdesigner.common.config.lanelet2_config import lanelet2_config
 from crdesigner.map_conversion.lanelet2.cr2lanelet import CR2LaneletConverter
@@ -17,7 +27,8 @@ set_list = [
     "naive",
     "CARLA",
     "esmini",
-    "SafetyPool_Emil"
+    "SafetyPool_Emil",
+    "custom",
 ]
 
 # Output handling
@@ -104,12 +115,14 @@ def conductConversion(
         if (scenario):
             l2osm = CR2LaneletConverter(lanelet2_config)
             osm = l2osm(scenario)
-            return osm
+            # Return both the OSM element and the converter so the caller can
+            # access the OpenDrive->Lanelet2 ID mapping table.
+            return osm, l2osm
 
     except Exception as e:
         print(f"Error during conversion: {e}")
-        
-    return None
+
+    return None, None
 
 def coords2XY(
     p: PointCoords,
@@ -364,13 +377,13 @@ for set_name in set_list:
         scenario_location = prepConversionCRS()
         
         # Conversion
-        converted_osm = conductConversion(
+        converted_osm, converter = conductConversion(
             input_file = input_file_path, 
             scenario_location = scenario_location
         )
 
         # Conversion succeed!
-        if (converted_osm):
+        if (converted_osm is not None):
 
             predown_filename = f"predown_{input_file_tail_trimmed}.osm"
             predown_path = this_set_output_path / predown_filename
@@ -381,6 +394,24 @@ for set_name in set_list:
                     encoding = "UTF-8", 
                     pretty_print = True
                 ))
+
+            # Save OpenDrive -> Lanelet2 ID mapping as CSV
+            mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
+            mapping_path = this_set_output_path / mapping_filename
+            with open(mapping_path, "w", newline="") as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow([
+                    "opendrive_road_id",
+                    "opendrive_section_id",
+                    "opendrive_lane_id",
+                    "lanelet2_relation_id",
+                ])
+                for (road_id, section_id, lane_id), l2_id in sorted(
+                    converter.odr_to_l2_mapping.items()
+                ):
+                    writer.writerow([road_id, section_id, lane_id, l2_id])
+            print(f"ID mapping saved to {mapping_path} "
+                  f"({len(converter.odr_to_l2_mapping)} entries)")
 
             # Here comes my postprocessing
             downsamp_osm = postprocessDownsamplingOSM(

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    LEFT-HAND TRAFFIC (LHT) version.  rule="LHT" on the road element.
+
+    In LHT, positive lane IDs (+1) are on the LEFT of the reference line
+    and travel in the direction of increasing s (eastward here).
+    Negative lane IDs (-1, -2 …) are on the RIGHT and travel westward (opposing).
+
+    Section 0  (s=  0 .. 100 m):  2 lanes
+        lane  +1  left side,  driving eastward   (LHT main direction)
+        lane  -1  right side, driving westward   (opposing)
+
+    Section 1  (s=100 .. 200 m):  3 lanes
+        lane  +1  left side,  driving eastward   (continues from section 0)
+        lane  -1  right side, driving westward   (continues from section 0)
+        lane  -2  right side, driving westward   (new lane, tapers from 0 to 3.5 m over 40 m)
+
+    Lane width: 3.5 m each.
+    No elevation, no junction.
+-->
+<OpenDRIVE>
+    <header revMajor="1" revMinor="6"
+            name="two_to_three_lanes_LHT" version="1.00"
+            date="2026-03-16T00:00:00"
+            north="0.0" south="0.0" east="0.0" west="0.0">
+        <geoReference><![CDATA[+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs]]></geoReference>
+    </header>
+
+    <!-- rule="LHT" tells the parser this is left-hand traffic -->
+    <road name="MainRoad" length="200.0" id="1" junction="-1" rule="LHT">
+        <link/>
+
+        <type s="0.0" type="town">
+            <speed max="50" unit="km/h"/>
+        </type>
+
+        <!-- Straight geometry: starts at origin, heading east (hdg=0) -->
+        <planView>
+            <geometry s="0.0" x="0.0" y="0.0" hdg="0.0" length="200.0">
+                <line/>
+            </geometry>
+        </planView>
+
+        <elevationProfile>
+            <elevation s="0.0" a="0.0" b="0.0" c="0.0" d="0.0"/>
+        </elevationProfile>
+
+        <lateralProfile/>
+
+        <lanes>
+
+            <!-- ============================================================
+                 Section 0: s = 0 .. 100 m  (2 lanes)
+            ============================================================ -->
+            <laneSection s="0.0">
+                <left>
+                    <!-- Lane +1: LHT main driving direction (eastward) -->
+                    <lane id="1" type="driving" level="false">
+                        <link>
+                            <successor id="1"/>
+                        </link>
+                        <width sOffset="0.0" a="3.5" b="0.0" c="0.0" d="0.0"/>
+                        <roadMark sOffset="0.0" type="solid" weight="standard"
+                                  color="white" width="0.15"/>
+                    </lane>
+                </left>
+
+                <center>
+                    <lane id="0" type="none" level="false">
+                        <!-- Double-yellow centre line separating the two directions -->
+                        <roadMark sOffset="0.0" type="solid solid" weight="standard"
+                                  color="yellow" width="0.15"/>
+                    </lane>
+                </center>
+
+                <right>
+                    <!-- Lane -1: opposing direction (westward) -->
+                    <lane id="-1" type="driving" level="false">
+                        <link>
+                            <successor id="-1"/>
+                        </link>
+                        <width sOffset="0.0" a="3.5" b="0.0" c="0.0" d="0.0"/>
+                        <roadMark sOffset="0.0" type="solid" weight="standard"
+                                  color="white" width="0.15"/>
+                    </lane>
+                </right>
+            </laneSection>
+
+            <!-- ============================================================
+                 Section 1: s = 100 .. 200 m  (3 lanes)
+            ============================================================ -->
+            <laneSection s="100.0">
+                <left>
+                    <!-- Lane +1 continues from section 0 lane +1 -->
+                    <lane id="1" type="driving" level="false">
+                        <link>
+                            <predecessor id="1"/>
+                        </link>
+                        <width sOffset="0.0" a="3.5" b="0.0" c="0.0" d="0.0"/>
+                        <roadMark sOffset="0.0" type="solid" weight="standard"
+                                  color="white" width="0.15"/>
+                    </lane>
+                </left>
+
+                <center>
+                    <lane id="0" type="none" level="false">
+                        <roadMark sOffset="0.0" type="solid solid" weight="standard"
+                                  color="yellow" width="0.15"/>
+                    </lane>
+                </center>
+
+                <right>
+                    <!-- Lane -1 continues from section 0 lane -1 -->
+                    <lane id="-1" type="driving" level="false">
+                        <link>
+                            <predecessor id="-1"/>
+                        </link>
+                        <width sOffset="0.0" a="3.5" b="0.0" c="0.0" d="0.0"/>
+                        <roadMark sOffset="0.0" type="solid" weight="standard"
+                                  color="white" width="0.15"/>
+                    </lane>
+
+                    <!-- Lane -2: new opposing lane added at s=100, tapers from 0 to 3.5 m.
+                         Cubic polynomial with zero slope at both ends over L=40 m:
+                           w(ds) = c·ds² + d·ds³
+                           c =  10.5 / 1600  =  0.0065625
+                           d =  -7   / 64000 = -0.000109375  -->
+                    <lane id="-2" type="driving" level="false">
+                        <link/>
+                        <!-- taper: 0 -> 3.5 m over 40 m -->
+                        <width sOffset="0.0"  a="0.0" b="0.0" c="0.0065625" d="-0.000109375"/>
+                        <!-- constant full width for the remaining 60 m -->
+                        <width sOffset="40.0" a="3.5" b="0.0" c="0.0"       d="0.0"/>
+                        <roadMark sOffset="0.0" type="solid" weight="standard"
+                                  color="white" width="0.15"/>
+                    </lane>
+                </right>
+            </laneSection>
+
+        </lanes>
+    </road>
+</OpenDRIVE>
