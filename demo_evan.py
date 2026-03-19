@@ -17,6 +17,7 @@ CR_DESIGNER_PATH = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "commonroad-s
 sys.path.insert(0, CR_DESIGNER_PATH)
 
 from crdesigner.common.config.lanelet2_config import lanelet2_config
+from crdesigner.common.config.opendrive_config import OpenDriveConfig
 from crdesigner.map_conversion.lanelet2.cr2lanelet import CR2LaneletConverter
 from commonroad.scenario.scenario import Location, GeoTransformation
 from crdesigner.map_conversion.map_conversion_interface import opendrive_to_commonroad
@@ -103,12 +104,15 @@ def prepConversionCRS(
 def conductConversion(
     input_file: str,
     scenario_location: Location,
+    odr_conf: OpenDriveConfig = None,
 ):
     
     try:
+        if odr_conf is None:
+            odr_conf = OpenDriveConfig()
 
         # Scenario initialization
-        scenario = opendrive_to_commonroad(input_file)
+        scenario = opendrive_to_commonroad(input_file, odr_conf=odr_conf)
         scenario.location = scenario_location
 
         # Attempt conversion
@@ -353,6 +357,11 @@ def postprocessDownsamplingOSM(
 
     return osm_root
 
+# Config with lane-section merging disabled — used for the "custom" set so that
+# individual lane sections are preserved as separate lanelets in the output.
+no_concat_config = OpenDriveConfig()
+no_concat_config.concatenate_lanelets_flag = False
+
 for set_name in set_list:
 
     print(f"\n=============== Working on {set_name} ===============\n")
@@ -361,6 +370,9 @@ for set_name in set_list:
     this_set_output_path = output_dir / set_name
     if not (os.path.exists(this_set_output_path)):
         os.makedirs(this_set_output_path)
+
+    # Use no-concat config for the custom set to preserve lane section boundaries
+    odr_conf = no_concat_config
 
     for input_file in os.listdir(this_set_input_path):
 
@@ -379,7 +391,8 @@ for set_name in set_list:
         # Conversion
         converted_osm, converter = conductConversion(
             input_file = input_file_path, 
-            scenario_location = scenario_location
+            scenario_location = scenario_location,
+            odr_conf = odr_conf,
         )
 
         # Conversion succeed!
