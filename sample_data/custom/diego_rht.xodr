@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<OpenDRIVE>
+<header revMajor="1" revMinor="6" version="1.6"/>
+<road id="1" junction="-1" length="280.0" name="R1">
+	<link>
+		<successor elementId="2" elementType="road" contactPoint="start"/>
+	</link>
+	<type s="0.0" type="motorway">
+		<speed max="35.0"/>
+	</type>
+	<planView>
+	  <geometry hdg="0.0" length="280.0" s="0.0" x="0.0" y="0.0">
+	  	<line/>
+	  </geometry>
+	</planView>
+	<lanes>
+		<laneSection s="0.0">
+			<left>
+				<lane id="1" level="true" type="driving">
+					<link>
+						<successor id="1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+			</left>
+			<center>
+				<lane id="0" level="true" type="none">
+					<link>
+						<successor id="0"/>
+					</link>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</center>
+			<right>
+				<lane id="-1" level="true" type="driving">
+					<link>
+						<successor id="-1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-2" level="true" type="driving">
+					<link>
+						<successor id="-2"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-3" level="true" type="driving">
+					<link>
+						<successor id="-3"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</right>
+		</laneSection>
+		<laneSection s="140.0">
+			<left>
+				<lane id="1" level="true" type="driving">
+					<link>
+						<predecessor id="1"/>
+						<successor id="1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+			</left>
+			<center>
+				<lane id="0" level="true" type="none">
+					<link>
+						<predecessor id="0"/>
+						<successor id="0"/>
+					</link>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</center>
+			<right>
+				<lane id="-1" level="true" type="driving">
+					<link>
+						<predecessor id="-1"/>
+						<successor id="-1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-2" level="true" type="driving">
+					<link>
+						<predecessor id="-2"/>
+						<successor id="-2"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-3" level="true" type="driving">
+					<link>
+						<predecessor id="-3"/>
+						<successor id="-3"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</right>
+		</laneSection>
+	</lanes>
+</road>
+<road id="2" junction="-1" length="220" name="R2">
+	<link>
+		<predecessor elementId="1" elementType="road" contactPoint="end"/>
+	</link>
+	<type s="0.0" type="motorway">
+		<speed max="70.0"/>
+	</type>
+	<planView>
+	  <geometry hdg="0.0" length="220.0" s="0.0" x="280.0" y="0.0">
+	  	<line/>
+	  </geometry>
+	</planView>
+	<lanes>
+		<laneSection s="0.0">
+			<left>
+				<lane id="1" level="true" type="driving">
+					<link>
+						<predecessor id="1"/>
+						<successor id="1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+			</left>
+			<center>
+				<lane id="0" level="true" type="none">
+					<link>
+						<predecessor id="0"/>
+						<successor id="0"/>
+					</link>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</center>
+			<right>
+				<lane id="-1" level="true" type="driving">
+					<link>
+						<predecessor id="-1"/>
+						<successor id="-1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-2" level="true" type="driving">
+					<link>
+						<predecessor id="-2"/>
+						<successor id="-2"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-3" level="true" type="driving">
+					<link>
+						<predecessor id="-3"/>
+						<successor id="-3"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</right>
+		</laneSection>
+		<laneSection s="120.0">
+			<left>
+				<lane id="1" level="true" type="driving">
+					<link>
+						<predecessor id="1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+			</left>
+			<center>
+				<lane id="0" level="true" type="none">
+					<link>
+						<predecessor id="0"/>
+					</link>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</center>
+			<right>
+				<lane id="-1" level="true" type="driving">
+					<link>
+						<predecessor id="-1"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-2" level="true" type="driving">
+					<link>
+						<predecessor id="-2"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="broken"/>
+				</lane>
+				<lane id="-3" level="true" type="driving">
+					<link>
+						<predecessor id="-3"/>
+					</link>
+					<width a="3.55" b="0.0" c="0.0" d="0.0" sOffset="0.0"/>
+					<roadMark color="standard" sOffset="0.0" type="solid"/>
+				</lane>
+			</right>
+		</laneSection>
+	</lanes>
+</road>
+</OpenDRIVE>
