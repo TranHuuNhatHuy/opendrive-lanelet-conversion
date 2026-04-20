@@ -7,6 +7,7 @@ from lxml import etree
 from pyproj import CRS, Transformer
 import math
 import itertools
+from datetime import date
 
 # Insert at the front of sys.path so the local repo is imported before any
 # pip-installed crdesigner package.
@@ -33,7 +34,7 @@ set_list = [
 ]
 
 # Output handling
-output_dir = Path("./output/20250601")
+output_dir = Path(f"./output/{date.today}")
 if not (os.path.exists(output_dir)):
     os.makedirs(output_dir)
 
@@ -374,7 +375,7 @@ for set_name in set_list:
     # Use no-concat config for the custom set to preserve lane section boundaries
     odr_conf = no_concat_config
 
-    for input_file in os.listdir(this_set_input_path):
+    for input_file in os.listdir(this_set_input_path)[0]:
 
         # Input handling
         input_file_path = this_set_input_path / input_file
@@ -394,6 +395,8 @@ for set_name in set_list:
             scenario_location = scenario_location,
             odr_conf = odr_conf,
         )
+        # print(dir(converter))
+        # print(vars(converter))
 
         # Conversion succeed!
         if (converted_osm is not None):
@@ -408,23 +411,23 @@ for set_name in set_list:
                     pretty_print = True
                 ))
 
-            # Save OpenDrive -> Lanelet2 ID mapping as CSV
-            mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
-            mapping_path = this_set_output_path / mapping_filename
-            with open(mapping_path, "w", newline="") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow([
-                    "opendrive_road_id",
-                    "opendrive_section_id",
-                    "opendrive_lane_id",
-                    "lanelet2_relation_id",
-                ])
-                for (road_id, section_id, lane_id), l2_id in sorted(
-                    converter.odr_to_l2_mapping.items()
-                ):
-                    writer.writerow([road_id, section_id, lane_id, l2_id])
-            print(f"ID mapping saved to {mapping_path} "
-                  f"({len(converter.odr_to_l2_mapping)} entries)")
+            # # Save OpenDrive -> Lanelet2 ID mapping as CSV
+            # mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
+            # mapping_path = this_set_output_path / mapping_filename
+            # with open(mapping_path, "w", newline="") as csv_file:
+            #     writer = csv.writer(csv_file)
+            #     writer.writerow([
+            #         "opendrive_road_id",
+            #         "opendrive_section_id",
+            #         "opendrive_lane_id",
+            #         "lanelet2_relation_id",
+            #     ])
+            #     for (road_id, section_id, lane_id), l2_id in sorted(
+            #         converter.odr_to_l2_mapping.items()
+            #     ):
+            #         writer.writerow([road_id, section_id, lane_id, l2_id])
+            # print(f"ID mapping saved to {mapping_path} "
+            #       f"({len(converter.odr_to_l2_mapping)} entries)")
 
             # Here comes my postprocessing
             downsamp_osm = postprocessDownsamplingOSM(
@@ -441,4 +444,4 @@ for set_name in set_list:
                     pretty_print = True
                 ))
         
-            print("Quest complete")
+            print(f"Converted file saved to : {output_path}")
