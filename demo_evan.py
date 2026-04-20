@@ -21,7 +21,9 @@ from crdesigner.common.config.lanelet2_config import lanelet2_config
 from crdesigner.common.config.opendrive_config import OpenDriveConfig
 from crdesigner.map_conversion.lanelet2.cr2lanelet import CR2LaneletConverter
 from commonroad.scenario.scenario import Location, GeoTransformation
-from crdesigner.map_conversion.map_conversion_interface import opendrive_to_commonroad
+from crdesigner.map_conversion.opendrive.odr2cr.opendrive_parser.parser import parse_opendrive
+from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion.network import Network
+from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion import network as odr_network_module
 
 # Input handling
 input_dir = Path("./sample_data")
@@ -34,7 +36,7 @@ set_list = [
 ]
 
 # Output handling
-output_dir = Path(f"./output/{date.today}")
+output_dir = Path(f"./output/{date.today().isoformat()}")
 if not (os.path.exists(output_dir)):
     os.makedirs(output_dir)
 
@@ -128,6 +130,69 @@ def conductConversion(
         print(f"Error during conversion: {e}")
 
     return None, None
+
+
+def convertOpenDriveWithMapping(
+    input_file: str,
+    odr_conf: OpenDriveConfig,
+):
+
+    # Capture the OpenDRIVE-based lanelet id (stored in lanelet.description)
+    # before the conversion utility strips it when creating a base LaneletNetwork.
+    cr_lanelet_to_odr_lane = {}
+    original_convert_to_base = odr_network_module.convert_to_base_lanelet_network
+
+    def _capture_and_convert(conv_lanelet_network):
+        for lanelet in conv_lanelet_network.lanelets:
+            odr_encoded = getattr(lanelet, "description", None)
+            if odr_encoded is not None:
+                cr_lanelet_to_odr_lane[int(lanelet.lanelet_id)] = str(odr_encoded)
+        return original_convert_to_base(conv_lanelet_network)
+
+    odr_network_module.convert_to_base_lanelet_network = _capture_and_convert
+    try:
+        opendrive = parse_opendrive(Path(input_file))
+        road_network = Network()
+        road_network.load_opendrive(opendrive)
+        scenario = road_network.export_commonroad_scenario(od_config=odr_conf)
+    finally:
+        odr_network_module.convert_to_base_lanelet_network = original_convert_to_base
+
+    return scenario, cr_lanelet_to_odr_lane
+
+
+def buildCrToLl2LaneMapping(converter: CR2LaneletConverter):
+
+    if (converter is None) or (converter.osm is None):
+        return {}
+
+    lanelet_way_rel_ids = {
+        (way_rel.left_way, way_rel.right_way): way_rel_id
+        for way_rel_id, way_rel in converter.osm.way_relations.items()
+        if way_rel.tag_dict.get("type") == "lanelet"
+    }
+
+    cr_to_ll2 = {}
+    for cr_lanelet_id, left_way_id in converter.left_ways.items():
+        right_way_id = converter.right_ways.get(cr_lanelet_id)
+        if right_way_id is None:
+            continue
+
+        ll2_relation_id = lanelet_way_rel_ids.get((left_way_id, right_way_id))
+        if ll2_relation_id is not None:
+            cr_to_ll2[int(cr_lanelet_id)] = int(ll2_relation_id)
+
+    return cr_to_ll2
+
+
+def parseOdrLaneId(odr_encoded_lane_id: str):
+
+    # Expected formats include: road.section.lane.width and road.section.lane.width.m
+    parts = str(odr_encoded_lane_id).split(".")
+    if len(parts) < 3:
+        return None
+
+    return parts[0], parts[1], parts[2]
 
 def coords2XY(
     p: PointCoords,
@@ -375,7 +440,7 @@ for set_name in set_list:
     # Use no-concat config for the custom set to preserve lane section boundaries
     odr_conf = no_concat_config
 
-    for input_file in os.listdir(this_set_input_path)[0]:
+    for input_file in os.listdir(this_set_input_path):
 
         # Input handling
         input_file_path = this_set_input_path / input_file
@@ -390,13 +455,20 @@ for set_name in set_list:
         scenario_location = prepConversionCRS()
         
         # Conversion
-        converted_osm, converter = conductConversion(
-            input_file = input_file_path, 
-            scenario_location = scenario_location,
-            odr_conf = odr_conf,
-        )
-        # print(dir(converter))
-        # print(vars(converter))
+        converted_osm = None
+        converter = None
+        cr_lanelet_to_odr_lane = {}
+        try:
+            scenario, cr_lanelet_to_odr_lane = convertOpenDriveWithMapping(
+                input_file = input_file_path,
+                odr_conf = odr_conf,
+            )
+            scenario.location = scenario_location
+            l2osm = CR2LaneletConverter(lanelet2_config)
+            converted_osm = l2osm(scenario)
+            converter = l2osm
+        except Exception as e:
+            print(f"Error during conversion: {e}")
 
         # Conversion succeed!
         if (converted_osm is not None):
@@ -411,23 +483,43 @@ for set_name in set_list:
                     pretty_print = True
                 ))
 
-            # # Save OpenDrive -> Lanelet2 ID mapping as CSV
-            # mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
-            # mapping_path = this_set_output_path / mapping_filename
-            # with open(mapping_path, "w", newline="") as csv_file:
-            #     writer = csv.writer(csv_file)
-            #     writer.writerow([
-            #         "opendrive_road_id",
-            #         "opendrive_section_id",
-            #         "opendrive_lane_id",
-            #         "lanelet2_relation_id",
-            #     ])
-            #     for (road_id, section_id, lane_id), l2_id in sorted(
-            #         converter.odr_to_l2_mapping.items()
-            #     ):
-            #         writer.writerow([road_id, section_id, lane_id, l2_id])
-            # print(f"ID mapping saved to {mapping_path} "
-            #       f"({len(converter.odr_to_l2_mapping)} entries)")
+            # Save OpenDrive -> Lanelet2 ID mapping as CSV
+            mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
+            mapping_path = this_set_output_path / mapping_filename
+            with open(mapping_path, "w", newline="") as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow([
+                    "opendrive_road_id",
+                    "opendrive_section_id",
+                    "opendrive_lane_id",
+                    "lanelet2_relation_id",
+                ])
+
+                cr_to_ll2 = buildCrToLl2LaneMapping(converter)
+                mapping_rows = []
+                for cr_lanelet_id, ll2_relation_id in cr_to_ll2.items():
+                    odr_encoded_lane_id = cr_lanelet_to_odr_lane.get(cr_lanelet_id)
+                    if odr_encoded_lane_id is None:
+                        continue
+
+                    odr_triplet = parseOdrLaneId(odr_encoded_lane_id)
+                    if odr_triplet is None:
+                        continue
+
+                    road_id, section_id, lane_id = odr_triplet
+                    mapping_rows.append((road_id, section_id, lane_id, ll2_relation_id))
+
+                def _sort_key(row):
+                    road, section, lane, relation = row
+                    try:
+                        return (int(road), int(section), int(lane), int(relation))
+                    except ValueError:
+                        return (road, section, lane, relation)
+
+                for road_id, section_id, lane_id, ll2_relation_id in sorted(mapping_rows, key=_sort_key):
+                    writer.writerow([road_id, section_id, lane_id, ll2_relation_id])
+
+            print(f"ID mapping saved to {mapping_path} ({len(mapping_rows)} entries)")
 
             # Here comes my postprocessing
             downsamp_osm = postprocessDownsamplingOSM(
@@ -445,3 +537,6 @@ for set_name in set_list:
                 ))
         
             print(f"Converted file saved to : {output_path}")
+
+        break
+    break
