@@ -104,34 +104,6 @@ def prepConversionCRS(
 
     return scenario_location
 
-def conductConversion(
-    input_file: str,
-    scenario_location: Location,
-    odr_conf: OpenDriveConfig = None,
-):
-    
-    try:
-        if odr_conf is None:
-            odr_conf = OpenDriveConfig()
-
-        # Scenario initialization
-        scenario = opendrive_to_commonroad(input_file, odr_conf=odr_conf)
-        scenario.location = scenario_location
-
-        # Attempt conversion
-        if (scenario):
-            l2osm = CR2LaneletConverter(lanelet2_config)
-            osm = l2osm(scenario)
-            # Return both the OSM element and the converter so the caller can
-            # access the OpenDrive->Lanelet2 ID mapping table.
-            return osm, l2osm
-
-    except Exception as e:
-        print(f"Error during conversion: {e}")
-
-    return None, None
-
-
 def convertOpenDriveWithMapping(
     input_file: str,
     odr_conf: OpenDriveConfig,
