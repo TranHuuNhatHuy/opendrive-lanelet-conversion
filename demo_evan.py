@@ -400,7 +400,11 @@ def postprocessDownsamplingOSM(
 no_concat_config = OpenDriveConfig()
 no_concat_config.concatenate_lanelets_flag = False
 
+process_time_log = {}
+
 for set_name in set_list:
+
+    process_time_log[set_name] = {}
 
     print(f"\n=============== Working on {set_name} ===============\n")
 
@@ -413,6 +417,8 @@ for set_name in set_list:
     odr_conf = no_concat_config
 
     for input_file in os.listdir(this_set_input_path):
+
+        start_moment = os.times()
 
         # Input handling
         input_file_path = this_set_input_path / input_file
@@ -445,6 +451,9 @@ for set_name in set_list:
         # Conversion succeed!
         if (converted_osm is not None):
 
+            done_conv_moment = os.times()
+            done_conv_time_secs = done_conv_moment.elapsed - start_moment.elapsed
+
             predown_filename = f"predown_{input_file_tail_trimmed}.osm"
             predown_path = this_set_output_path / predown_filename
             with open(predown_path, "wb") as file_out:
@@ -456,6 +465,9 @@ for set_name in set_list:
                 ))
 
             # Save OpenDrive -> Lanelet2 ID mapping as CSV
+
+            start_mapping_moment = os.times()
+
             mapping_filename = f"id_mapping_{input_file_tail_trimmed}.csv"
             mapping_path = this_set_output_path / mapping_filename
             with open(mapping_path, "w", newline="") as csv_file:
@@ -493,12 +505,18 @@ for set_name in set_list:
 
             print(f"ID mapping saved to {mapping_path} ({len(mapping_rows)} entries)")
 
+            done_mapping_moment = os.times()
+            done_mapping_time_secs = done_mapping_moment.elapsed - start_mapping_moment.elapsed
+
             # Here comes my postprocessing
             downsamp_osm = postprocessDownsamplingOSM(
                 converted_osm, 
                 STRAIGHT_ANGLE_THRSH,
                 MIN_SEGMENT_DIST,
             )
+
+            done_downsamp_moment = os.times()
+            done_downsamp_time_secs = done_downsamp_moment.elapsed - done_mapping_moment.elapsed
 
             with open(output_path, "wb") as file_out:
                 file_out.write(etree.tostring(
@@ -509,6 +527,52 @@ for set_name in set_list:
                 ))
         
             print(f"Converted file saved to : {output_path}")
+            print(f"Conversion time: {done_conv_time_secs:.2f} secs")
+            print(f"Mapping time: {done_mapping_time_secs:.2f} secs")
+            print(f"Downsampling time: {done_downsamp_time_secs:.2f} secs")
+            print(f"Total processing time: {(done_downsamp_moment.elapsed - start_moment.elapsed):.2f} secs")
 
-        break
-    break
+            process_time_log[set_name][input_file] = {
+                "conversion_time_secs": done_conv_time_secs,
+                "mapping_time_secs": done_mapping_time_secs,
+                "downsampling_time_secs": done_downsamp_time_secs,
+                "total_time_secs": done_downsamp_moment.elapsed - start_moment.elapsed
+            }
+
+        else:
+            print(f"Conversion failed for {input_file_path}, skipping postprocessing and output.")
+            process_time_log[set_name][input_file] = None
+
+
+# Save processing times log as CSV
+times_log_path = output_dir / "processing_times_log.csv"
+with open(
+    times_log_path, "w", 
+    newline = ""
+) as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow([
+        "set_name",
+        "input_file",
+        "conversion_time_secs",
+        "mapping_time_secs",
+        "downsampling_time_secs",
+        "total_time_secs"
+    ])
+
+    for set_name, file_times in process_time_log.items():
+        for input_file, times in file_times.items():
+            if (times is not None):
+                writer.writerow([
+                    set_name,
+                    input_file,
+                    f"{times['conversion_time_secs']:.2f}",
+                    f"{times['mapping_time_secs']:.2f}",
+                    f"{times['downsampling_time_secs']:.2f}",
+                    f"{times['total_time_secs']:.2f}"
+                ])
+            else:
+                writer.writerow([
+                    set_name, input_file, 
+                    "conversion_failed", "", "", ""
+                ])
