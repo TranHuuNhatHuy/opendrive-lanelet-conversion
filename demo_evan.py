@@ -9,21 +9,20 @@ import math
 import itertools
 from datetime import date
 
-# Insert at the front of sys.path so the local repo is imported before any
-# pip-installed crdesigner package.
-# __file__ resolves correctly regardless of the working directory and regardless
-# of whether opendrive-lanelet-conversion lives inside or alongside the repo.
-_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CR_DESIGNER_PATH = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "commonroad-scenario-designer"))
-sys.path.insert(0, CR_DESIGNER_PATH)
+# # Insert at the front of sys.path so the local repo is imported before any
+# # pip-installed crdesigner package.
+# # __file__ resolves correctly regardless of the working directory and regardless
+# # of whether opendrive-lanelet-conversion lives inside or alongside the repo.
+# _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# CR_DESIGNER_PATH = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "commonroad-scenario-designer"))
+# sys.path.insert(0, CR_DESIGNER_PATH)
 
 from crdesigner.common.config.lanelet2_config import lanelet2_config
 from crdesigner.common.config.opendrive_config import OpenDriveConfig
 from crdesigner.map_conversion.lanelet2.cr2lanelet import CR2LaneletConverter
 from commonroad.scenario.scenario import Location, GeoTransformation
 from crdesigner.map_conversion.opendrive.odr2cr.opendrive_parser.parser import parse_opendrive
-from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion.network import Network
-from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion import network as odr_network_module
+from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion import network
 
 # Input handling
 input_dir = Path("./sample_data")
@@ -50,29 +49,6 @@ PROJ_MET = "EPSG:3857"                  # WGS64 (Meter)
 PointCoords = tuple[float, float]
 R = 6378000                             # Earth radius, in meters
 
-# def extractGeorefString(xodr_path: str) -> tuple[str, bool]:
-    
-#     try:
-#         with open(xodr_path, "rb") as f:
-#             tree = etree.parse(f)
-#             geo_elem = tree.find(".//geoReference")
-
-#             if ((geo_elem is not None) and (geo_elem.text)):
-#                 raw_proj_str = geo_elem.text.strip()
-#                 print(f"Proj found in input: {raw_proj_str}")
-
-#                 # Validate
-#                 try:
-#                     _ = CRS.from_proj4(raw_proj_str)
-#                     return raw_proj_str, True
-#                 except Exception as e:
-#                     print(f"Invalid CRS string: {e}")
-
-#     except Exception as e:
-#         print(f"Error parsing geoReference from {xodr_path}: {e}")
-
-#     print(f"Invalid proj, using default {PROJ_MET}")
-#     return PROJ_MET, False
 
 def prepConversionCRS(
     georeference_string: str = PROJ_MET,
@@ -104,15 +80,16 @@ def prepConversionCRS(
 
     return scenario_location
 
+
 def convertOpenDriveWithMapping(
-    input_file: str,
-    odr_conf: OpenDriveConfig,
-):
+        input_file: str,
+        odr_conf: OpenDriveConfig,
+) -> tuple[Location, dict[int, str]]:
 
     # Capture the OpenDRIVE-based lanelet id (stored in lanelet.description)
     # before the conversion utility strips it when creating a base LaneletNetwork.
     cr_lanelet_to_odr_lane = {}
-    original_convert_to_base = odr_network_module.convert_to_base_lanelet_network
+    original_convert_to_base = network.convert_to_base_lanelet_network
 
     def _capture_and_convert(conv_lanelet_network):
         for lanelet in conv_lanelet_network.lanelets:
@@ -121,21 +98,27 @@ def convertOpenDriveWithMapping(
                 cr_lanelet_to_odr_lane[int(lanelet.lanelet_id)] = str(odr_encoded)
         return original_convert_to_base(conv_lanelet_network)
 
-    odr_network_module.convert_to_base_lanelet_network = _capture_and_convert
+    network.convert_to_base_lanelet_network = _capture_and_convert
+
     try:
         opendrive = parse_opendrive(Path(input_file))
-        road_network = Network()
+        road_network = network.Network()
         road_network.load_opendrive(opendrive)
-        scenario = road_network.export_commonroad_scenario(od_config=odr_conf)
+        scenario = road_network.export_commonroad_scenario(od_config = odr_conf)
     finally:
-        odr_network_module.convert_to_base_lanelet_network = original_convert_to_base
+        network.convert_to_base_lanelet_network = original_convert_to_base
 
-    return scenario, cr_lanelet_to_odr_lane
+    return (scenario, cr_lanelet_to_odr_lane)
 
 
-def buildCrToLl2LaneMapping(converter: CR2LaneletConverter):
+def buildCrToLl2LaneMapping(
+        converter: CR2LaneletConverter
+) -> dict[int, int]:
 
-    if (converter is None) or (converter.osm is None):
+    if (
+        (converter is None) or 
+        (converter.osm is None)
+    ):
         return {}
 
     lanelet_way_rel_ids = {
@@ -151,7 +134,7 @@ def buildCrToLl2LaneMapping(converter: CR2LaneletConverter):
             continue
 
         ll2_relation_id = lanelet_way_rel_ids.get((left_way_id, right_way_id))
-        if ll2_relation_id is not None:
+        if (ll2_relation_id is not None):
             cr_to_ll2[int(cr_lanelet_id)] = int(ll2_relation_id)
 
     return cr_to_ll2
@@ -161,10 +144,11 @@ def parseOdrLaneId(odr_encoded_lane_id: str):
 
     # Expected formats include: road.section.lane.width and road.section.lane.width.m
     parts = str(odr_encoded_lane_id).split(".")
-    if len(parts) < 3:
+    if (len(parts) < 3):
         return None
 
     return parts[0], parts[1], parts[2]
+
 
 def coords2XY(
     p: PointCoords,
@@ -180,6 +164,7 @@ def coords2XY(
 
     return x, y
 
+
 def dist_2nodes(
     p1: PointCoords,
     p2: PointCoords
@@ -192,11 +177,16 @@ def dist_2nodes(
     dlon = math.radians(lon2 - lon1)
 
     angle = math.sin(dlat / 2) ** 2 + \
-            math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+            (
+                math.cos(math.radians(lat1)) * \
+                math.cos(math.radians(lat2)) * \
+                math.sin(dlon / 2) ** 2
+            )
 
     dist = 2 * R * math.asin(math.sqrt(angle))
 
     return dist
+
 
 def calAngleTriplePoints(
     p1: PointCoords,
@@ -221,7 +211,10 @@ def calAngleTriplePoints(
     norm_v1 = math.hypot(*v1)
     norm_v2 = math.hypot(*v2)
 
-    if (norm_v1 == 0) or (norm_v2 == 0):
+    if (
+        (norm_v1 == 0) or 
+        (norm_v2 == 0)
+    ):
         return 180
 
     dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
