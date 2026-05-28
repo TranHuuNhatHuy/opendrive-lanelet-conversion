@@ -16,6 +16,13 @@ from commonroad.scenario.scenario import Location, GeoTransformation
 from crdesigner.map_conversion.opendrive.odr2cr.opendrive_parser.parser import parse_opendrive
 from crdesigner.map_conversion.opendrive.odr2cr.opendrive_conversion import network
 
+from utils.map_origin import (
+    extract_map_origin,
+    needs_proj_normalization,
+    write_map_origin_yaml,
+    write_normalized_xodr,
+)
+
 # Input handling
 input_dir = Path("./sample_data")
 set_list = [
@@ -414,16 +421,42 @@ for set_name in set_list:
         output_filename = f"converted_{input_file_tail_trimmed}.osm"
         output_path = this_set_output_path / output_filename
 
-        # proj_str, output_latlon = extractGeorefString(input_file_path)
-        scenario_location = prepConversionCRS()
-        
+        # Extract <geoReference> and emit the Autoware map-origin sidecar.
+        # Always written, even if conversion fails later — gives downstream
+        # tools a starting point and records *which* branch (proj4 parse vs
+        # defaults) was taken.
+        map_origin = extract_map_origin(input_file_path)
+        origin_filename = f"map_origin_{input_file_tail_trimmed}.yaml"
+        origin_path = this_set_output_path / origin_filename
+        write_map_origin_yaml(origin_path, map_origin)
+        if map_origin.source == "proj4":
+            print(f"Map origin saved to {origin_path} (from <geoReference>)")
+        else:
+            print(f"Map origin saved to {origin_path} (defaults; reason: {map_origin.source})")
+
+        # CARLA / RoadRunner emit a non-conformant <geoReference> with no
+        # `+proj=` directive, which pyproj (and therefore crdesigner) rejects.
+        # Rewrite it into a valid +proj=tmerc string in a sidecar .xodr and
+        # feed *that* to the converter — the original input is never modified.
+        conversion_input = input_file_path
+        if needs_proj_normalization(map_origin):
+            normalized_path = this_set_output_path / f"normalized_{input_file_tail_trimmed}.xodr"
+            write_normalized_xodr(input_file_path, normalized_path, map_origin)
+            conversion_input = normalized_path
+            print(f"Normalized georef written to {normalized_path}")
+
+        scenario_location = prepConversionCRS(
+            gps_latitude = map_origin.latitude,
+            gps_longitude = map_origin.longitude,
+        )
+
         # Conversion
         converted_osm = None
         converter = None
         cr_lanelet_to_odr_lane = {}
         try:
             scenario, cr_lanelet_to_odr_lane = convertOpenDriveWithMapping(
-                input_file = input_file_path,
+                input_file = conversion_input,
                 odr_conf = odr_conf,
             )
             scenario.location = scenario_location
