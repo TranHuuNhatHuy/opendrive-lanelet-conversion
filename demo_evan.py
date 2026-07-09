@@ -83,11 +83,12 @@ def prepConversionCRS(
 def convertOpenDriveWithMapping(
         input_file: str,
         odr_conf: OpenDriveConfig,
-) -> tuple[Location, dict[int, str]]:
+) -> tuple[Location, dict[int, str], dict[tuple[str, str], float]]:
 
     # Capture the OpenDRIVE-based lanelet id (stored in lanelet.description)
     # before the conversion utility strips it when creating a base LaneletNetwork.
     cr_lanelet_to_odr_lane = {}
+    odr_section_to_s = {}
     original_convert_to_base = network.convert_to_base_lanelet_network
 
     def _capture_and_convert(conv_lanelet_network):
@@ -101,13 +102,17 @@ def convertOpenDriveWithMapping(
 
     try:
         opendrive = parse_opendrive(Path(input_file))
+        for road in opendrive.roads:
+            road_id = str(road.id)
+            for lane_section in road.lanes.lane_sections:
+                odr_section_to_s[(road_id, str(lane_section.idx))] = float(lane_section.sPos)
         road_network = network.Network()
         road_network.load_opendrive(opendrive)
         scenario = road_network.export_commonroad_scenario(od_config = odr_conf)
     finally:
         network.convert_to_base_lanelet_network = original_convert_to_base
 
-    return (scenario, cr_lanelet_to_odr_lane)
+    return (scenario, cr_lanelet_to_odr_lane, odr_section_to_s)
 
 
 def buildCrToLl2LaneMapping(
@@ -147,6 +152,11 @@ def parseOdrLaneId(odr_encoded_lane_id: str):
         return None
 
     return parts[0], parts[1], parts[2]
+
+
+def formatSCoordinate(s_coordinate: float) -> str:
+
+    return format(s_coordinate, ".6f").rstrip("0").rstrip(".")
 
 
 def coords2XY(
@@ -454,8 +464,9 @@ for set_name in set_list:
         converted_osm = None
         converter = None
         cr_lanelet_to_odr_lane = {}
+        odr_section_to_s = {}
         try:
-            scenario, cr_lanelet_to_odr_lane = convertOpenDriveWithMapping(
+            scenario, cr_lanelet_to_odr_lane, odr_section_to_s = convertOpenDriveWithMapping(
                 input_file = conversion_input,
                 odr_conf = odr_conf,
             )
@@ -492,8 +503,8 @@ for set_name in set_list:
                 writer = csv.writer(csv_file)
                 writer.writerow([
                     "opendrive_road_id",
-                    "opendrive_section_id",
                     "opendrive_lane_id",
+                    "opendrive_s_coordinate",
                     "lanelet2_relation_id",
                 ])
 
@@ -509,17 +520,21 @@ for set_name in set_list:
                         continue
 
                     road_id, section_id, lane_id = odr_triplet
-                    mapping_rows.append((road_id, section_id, lane_id, ll2_relation_id))
+                    s_coordinate = odr_section_to_s.get((road_id, section_id))
+                    if s_coordinate is None:
+                        continue
+
+                    mapping_rows.append((road_id, lane_id, s_coordinate, ll2_relation_id))
 
                 def _sort_key(row):
-                    road, section, lane, relation = row
+                    road, lane, s_coordinate, relation = row
                     try:
-                        return (int(road), int(section), int(lane), int(relation))
+                        return (int(road), float(s_coordinate), int(lane), int(relation))
                     except ValueError:
-                        return (road, section, lane, relation)
+                        return (road, s_coordinate, lane, relation)
 
-                for road_id, section_id, lane_id, ll2_relation_id in sorted(mapping_rows, key=_sort_key):
-                    writer.writerow([road_id, section_id, lane_id, ll2_relation_id])
+                for road_id, lane_id, s_coordinate, ll2_relation_id in sorted(mapping_rows, key=_sort_key):
+                    writer.writerow([road_id, lane_id, formatSCoordinate(s_coordinate), ll2_relation_id])
 
             print(f"ID mapping saved to {mapping_path} ({len(mapping_rows)} entries)")
 
